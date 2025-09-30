@@ -17,7 +17,7 @@ export interface OrbFlutuanteProps {
   gameActive: boolean;
   onCollect: () => void;
   resetTrigger: number;
-  isHardMode: boolean; // <-- Novo prop para controlar o modo
+  isHardMode: boolean;
 }
 
 export default function OrbFlutuanteGame({ gameActive, onCollect, resetTrigger, isHardMode }: OrbFlutuanteProps) {
@@ -27,6 +27,7 @@ export default function OrbFlutuanteGame({ gameActive, onCollect, resetTrigger, 
     y: height / 2,
   });
   const [orbPosition, setOrbPosition] = useState(generateRandomPosition());
+  // Removido o estado local de score, agora gerenciado pelo componente pai
 
   // Efeito para resetar o jogo (forçado pelo pai)
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function OrbFlutuanteGame({ gameActive, onCollect, resetTrigger, 
       setOrbPosition(generateRandomPosition());
   }, [resetTrigger]);
 
-  // Efeito para mover o orbe a cada 3 segundos
+  // Efeito para mover o orbe a cada 3 segundos (Modo Difícil)
   useEffect(() => {
     // SÓ ATIVA o movimento se o jogo estiver ativo E for o MODO DIFÍCIL
     if (!gameActive || !isHardMode) return;
@@ -44,7 +45,7 @@ export default function OrbFlutuanteGame({ gameActive, onCollect, resetTrigger, 
     }, 3000); // 3000ms = 3 segundos
 
     return () => clearInterval(intervalId);
-  }, [gameActive, isHardMode]); // Depende também do modo de jogo
+  }, [gameActive, isHardMode]);
 
   // Listener do acelerômetro
   useEffect(() => {
@@ -100,7 +101,7 @@ export default function OrbFlutuanteGame({ gameActive, onCollect, resetTrigger, 
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     // Colisão por cobertura total
-    if (distance < PLAYER_SIZE  - ORB_SIZE) {
+    if (distance < PLAYER_SIZE / 2 - ORB_SIZE / 2) {
       setOrbPosition(generateRandomPosition());
       onCollect(); // Chama a função do pai para atualizar o placar
     }
@@ -142,16 +143,19 @@ const styles = StyleSheet.create({
     width: PLAYER_SIZE,
     height: PLAYER_SIZE,
     borderRadius: PLAYER_SIZE / 2,
-    backgroundColor: 'coral',
+    backgroundColor: '#FFD700', // Pac-Man Amarelo (Player)
     borderWidth: 2,
     borderColor: '#fff',
   },
   orb: {
     position: 'absolute',
     width: ORB_SIZE,
-    height: ORB_SIZE,
-    borderRadius: ORB_SIZE / 2,
-    backgroundColor: '#3498db',
+    height: ORB_SIZE + 5, // Levemente mais alto para a forma de fantasma
+    borderTopLeftRadius: ORB_SIZE / 2,
+    borderTopRightRadius: ORB_SIZE / 2,
+    borderBottomLeftRadius: 5, 
+    borderBottomRightRadius: 5,
+    backgroundColor: '#FFB852', // Fantasma Laranja (Target)
     borderWidth: 2,
     borderColor: '#fff',
   },
