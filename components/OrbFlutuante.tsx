@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Dimensions, Text } from 'react-native';
+import { StyleSheet, View, Dimensions } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
 
 const { width, height } = Dimensions.get('window');
@@ -13,7 +13,14 @@ const generateRandomPosition = () => {
   };
 };
 
-export default function App() {
+export interface OrbFlutuanteProps {
+  gameActive: boolean;
+  onCollect: () => void;
+  resetTrigger: number;
+  isHardMode: boolean; // <-- Novo prop para controlar o modo
+}
+
+export default function OrbFlutuanteGame({ gameActive, onCollect, resetTrigger, isHardMode }: OrbFlutuanteProps) {
   const [data, setData] = useState({ x: 0, y: 0, z: 0 });
   const [playerPosition, setPlayerPosition] = useState({
     x: width / 2,
@@ -21,21 +28,54 @@ export default function App() {
   });
   const [orbPosition, setOrbPosition] = useState(generateRandomPosition());
 
+  // Efeito para resetar o jogo (forçado pelo pai)
+  useEffect(() => {
+      setPlayerPosition({ x: width / 2, y: height / 2 });
+      setOrbPosition(generateRandomPosition());
+  }, [resetTrigger]);
+
+  // Efeito para mover o orbe a cada 3 segundos
+  useEffect(() => {
+    // SÓ ATIVA o movimento se o jogo estiver ativo E for o MODO DIFÍCIL
+    if (!gameActive || !isHardMode) return;
+
+    const intervalId = setInterval(() => {
+      setOrbPosition(generateRandomPosition());
+    }, 3000); // 3000ms = 3 segundos
+
+    return () => clearInterval(intervalId);
+  }, [gameActive, isHardMode]); // Depende também do modo de jogo
+
   // Listener do acelerômetro
   useEffect(() => {
-    Accelerometer.setUpdateInterval(16); // atualização a cada 100ms
+    // Pausa ou desativa o listener se o jogo não estiver ativo
+    if (!gameActive) {
+        Accelerometer.setUpdateInterval(0);
+        return;
+    }
+
+    Accelerometer.setUpdateInterval(16);
 
     const subscription = Accelerometer.addListener(accelerometerData => {
       setData(accelerometerData);
     });
 
-    return () => subscription.remove();
-  }, []);
+    return () => {
+        subscription.remove();
+        Accelerometer.setUpdateInterval(0); // Limpa o listener ao desmontar ou pausar
+    };
+  }, [gameActive]);
 
   // Movimento do jogador
   useEffect(() => {
-    let newX = playerPosition.x + data.x * -30; // inclinação lateral
-    let newY = playerPosition.y + data.y * 30;  // inclinação frente/trás
+    if (!gameActive) return; // Pausa o movimento se o jogo não estiver ativo
+
+    // Horizontal: Ajustado para 15 para melhor controle lateral.
+    let newX = playerPosition.x + data.x * -15; 
+    
+    // Compensação de Gravidade: Multiplicador maior (35) para 'subida' (data.y negativo) e menor (15) para 'descida' (data.y positivo).
+    const sensitivityY = data.y < 0 ? 35 : 15; 
+    let newY = playerPosition.y + data.y * sensitivityY;  // inclinação frente/trás
 
     // Limites da tela
     if (newX < 0) newX = 0;
@@ -44,10 +84,12 @@ export default function App() {
     if (newY > height - PLAYER_SIZE) newY = height - PLAYER_SIZE;
 
     setPlayerPosition({ x: newX, y: newY });
-  }, [data]);
+  }, [data, gameActive]);
 
   // Colisão com o orbe
   useEffect(() => {
+    if (!gameActive) return; // Pausa a colisão se o jogo não estiver ativo
+
     const playerCenterX = playerPosition.x + PLAYER_SIZE / 2;
     const playerCenterY = playerPosition.y + PLAYER_SIZE / 2;
     const orbCenterX = orbPosition.x + ORB_SIZE / 2;
@@ -57,15 +99,16 @@ export default function App() {
     const dy = playerCenterY - orbCenterY;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    if (distance < PLAYER_SIZE / 2 + ORB_SIZE / 2) {
+    // Colisão por cobertura total
+    if (distance < PLAYER_SIZE  - ORB_SIZE) {
       setOrbPosition(generateRandomPosition());
+      onCollect(); // Chama a função do pai para atualizar o placar
     }
-  }, [playerPosition]);
+  }, [playerPosition, gameActive]);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.instructions}>Colete o orbe azul!</Text>
-
+      {/* Apenas elementos do jogo. O UI (placar/instruções) é gerenciado pelo pai. */}
       <View
         style={[
           styles.orb,
@@ -92,16 +135,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2c3e50',
-  },
-  instructions: {
-    position: 'absolute',
-    top: 60,
-    left: 0,
-    right: 0,
-    textAlign: 'center',
-    fontSize: 20,
-    color: '#fff',
+    // Cor de fundo será definida no Index.tsx
   },
   player: {
     position: 'absolute',

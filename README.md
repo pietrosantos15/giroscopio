@@ -1,50 +1,65 @@
-# Welcome to your Expo app 👋
+# 📱 App Giroscópio e Acelerômetro - Pietro Freire Rezende dos Santos
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> Status do Projeto: Concluído ✔️
 
-## Get started
+---
 
-1. Install dependencies
+### Tabela de Conteúdos
+* [Descrição do Projeto](#descrição-do-projeto)
+* [Demonstração da Aplicação](#demonstração-da-aplicação)
+* [Funcionalidades](#-funcionalidades)
+* [Tecnologias Utilizadas](#️-tecnologias-utilizadas)
+* [Como Rodar o Projeto Localmente](#️-como-rodar-o-projeto-localmente)
+* [Funcionalidade Adicional: Controle de Movimento com Sensores](#-funcionalidade-adicional-controle-de-movimento-com-sensores)
+* [Autor](#-autor)
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+### Descrição do Projeto
+<p align="center">
+Este projeto é um aplicativo multi-plataforma, desenvolvido com React Native e Expo, que demonstra a integração e o uso de sensores de movimento de um dispositivo móvel, especificamente o giroscópio e o acelerômetro, através da biblioteca `expo-sensors`. O aplicativo inclui um componente para leitura de dados brutos do giroscópio e um mini-jogo interativo que usa o acelerômetro para controle de movimento.
+</p>
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+### Demonstração da Aplicação
+<p align="center">
+  *Substitua esta imagem ou GIF por uma demonstração do seu aplicativo em funcionamento, por exemplo, o jogo "Orb Flutuante" ou a tela de leitura do giroscópio.*
+</p>
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 🚀 Funcionalidades
 
-## Get a fresh project
+- **Leitura do Giroscópio:** Componente `LeituraGiroscopio` que exibe os dados de rotação (x, y, z) do giroscópio em tempo real, com intervalo de atualização de 300ms.
+- **Jogo Interativo "Orb Flutuante":** Componente `OrbFlutuante` que utiliza o acelerômetro para controlar a posição de um jogador na tela.
+- **Controle de Movimento:** O jogador (círculo coral) é movido pela inclinação do dispositivo, mapeando a aceleração (x e y) para a posição (left e top).
+- **Detecção de Colisão:** Ao colidir com o orbe (círculo azul), este é reposicionado aleatoriamente na tela.
+- **Otimização de Performance:** O acelerômetro tem um intervalo de atualização de 16ms para um movimento mais fluido.
 
-When you're ready, run:
+---
+
+### 🛠️ Tecnologias Utilizadas
+
+- **[React Native](https://reactnative.dev/)**
+- **[Expo](https://expo.dev/)**
+- **[TypeScript](https://www.typescriptlang.org/)**
+- **`expo-sensors`**
+- **`expo-router`** (para navegação baseada em arquivos)
+
+---
+
+### ⚙️ Como Rodar o Projeto Localmente
 
 ```bash
-npm run reset-project
-```
+# 1. Clone o repositório
+$ git clone [link-do-seu-repositorio]
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+# 2. Navegue até o diretório do projeto
+$ cd giroscopio
 
-## Learn more
+# 3. Instale as dependências
+$ npm install
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# 4. Inicie o servidor de desenvolvimento
+$ npx expo start
