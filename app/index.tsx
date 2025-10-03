@@ -5,14 +5,15 @@ import OrbFlutuanteGame from '@/components/OrbFlutuante';
 // Estados do Jogo
 type GameState = 'home' | 'playing' | 'gameOver';
 
-const GAME_TIME_SECONDS = 30;
+const GAME_TIME_SECONDS = 15;
 
 // --- Componentes de Tela ---
 
 const StartScreen = ({ onPlayEasy, onPlayHard }) => (
   <View style={styles.screenContainer}>
-    <Text style={styles.title}>Giroscópio Game</Text>
-    <Text style={styles.instructions}>Seu objetivo é coletar o orbe azul em {GAME_TIME_SECONDS} segundos, cobrindo-o totalmente com a bola laranja!</Text>
+    <Text style={styles.title}>GhostChase 👻</Text>
+    <Text style={styles.instructions}>Seu objetivo é coletar o fantasma laranja em {GAME_TIME_SECONDS} segundos, cobrindo-o totalmente com o Pac-Man amarelo!</Text>
+    <Text style={styles.modeInstructions}>Modo Difícil: O fantasma laranja troca de lugar a cada 2 segundos.</Text>
     <View style={styles.buttonContainer}>
       <Button title="MODO FÁCIL" onPress={onPlayEasy} color="#2ecc71" />
       <View style={{ width: 20 }} /> {/* Espaçamento */}
@@ -36,13 +37,13 @@ export default function Index() {
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(GAME_TIME_SECONDS);
   const [resetTrigger, setResetTrigger] = useState(0);
-  const [isHardMode, setIsHardMode] = useState(false); // <-- Novo estado para o modo
+  const [isHardMode, setIsHardMode] = useState(false); // Estado para o modo de jogo
 
   // Função para iniciar o jogo
-  const startGame = (hardMode: boolean) => { // <-- Recebe o modo
+  const startGame = (hardMode: boolean) => { // Recebe o modo
     setScore(0);
     setTimeLeft(GAME_TIME_SECONDS);
-    setIsHardMode(hardMode); // <-- Define o modo
+    setIsHardMode(hardMode); // Define o modo
     setGameState('playing');
     setResetTrigger(prev => prev + 1);
   };
@@ -74,13 +75,13 @@ export default function Index() {
   // Renderização condicional das telas
   if (gameState === 'home') {
     return <StartScreen 
-      onPlayEasy={() => startGame(false)} // Passa false para modo fácil
-      onPlayHard={() => startGame(true)}  // Passa true para modo difícil
+      onPlayEasy={() => startGame(false)} // Modo Fácil
+      onPlayHard={() => startGame(true)}  // Modo Difícil
     />;
   }
 
   if (gameState === 'gameOver') {
-    return <GameOverScreen score={score} onPlayAgain={() => setGameState('home')} />; // Volta para a tela inicial
+    return <GameOverScreen score={score} onPlayAgain={() => setGameState('home')} />;
   }
 
   // Renderiza a tela de jogo
@@ -88,13 +89,13 @@ export default function Index() {
     <View style={styles.gameContainer}>
       <Text style={styles.timerText}>Tempo: {timeLeft}s</Text>
       <Text style={styles.scoreTextGame}>Pontuação: {score}</Text>
-      <Text style={styles.instructionsGame}>Colete o orbe azul!</Text>
+      <Text style={styles.instructionsGame}>Colete o Fantasma Laranja!</Text>
       
       <OrbFlutuanteGame
         gameActive={gameState === 'playing'}
         onCollect={handleCollect}
         resetTrigger={resetTrigger}
-        isHardMode={isHardMode} // <-- Passa o modo para o componente de jogo
+        isHardMode={isHardMode} // Passa o modo para o componente de jogo
       />
     </View>
   );
@@ -120,6 +121,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#fff',
     textAlign: 'center',
+    marginBottom: 20,
+  },
+  modeInstructions: { // Nova instrução para o modo difícil
+    fontSize: 16,
+    color: '#ccc',
+    textAlign: 'center',
     marginBottom: 40,
   },
   scoreTextFinal: {
@@ -128,7 +135,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     fontWeight: 'bold',
   },
-  buttonContainer: { // <-- Novo estilo para alinhar os botões
+  buttonContainer: {
     flexDirection: 'row',
     marginTop: 20,
   },

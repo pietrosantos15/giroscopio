@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
+import { Audio } from 'expo-av';
+
+// Corrigido: import relativo do som
+import collectSound from '../assets/sounds/som.mp4';
 
 const { width, height } = Dimensions.get('window');
 const PLAYER_SIZE = 50;
@@ -20,39 +24,79 @@ export interface OrbFlutuanteProps {
   isHardMode: boolean;
 }
 
-export default function OrbFlutuanteGame({ gameActive, onCollect, resetTrigger, isHardMode }: OrbFlutuanteProps) {
+export default function OrbFlutuanteGame({
+  gameActive,
+  onCollect,
+  resetTrigger,
+  isHardMode,
+}: OrbFlutuanteProps) {
   const [data, setData] = useState({ x: 0, y: 0, z: 0 });
   const [playerPosition, setPlayerPosition] = useState({
     x: width / 2,
     y: height / 2,
   });
   const [orbPosition, setOrbPosition] = useState(generateRandomPosition());
-  // Removido o estado local de score, agora gerenciado pelo componente pai
+  const [soundObject, setSoundObject] = useState<Audio.Sound | null>(null);
 
-  // Efeito para resetar o jogo (forçado pelo pai)
+  // 1. Carrega e descarrega o som
   useEffect(() => {
-      setPlayerPosition({ x: width / 2, y: height / 2 });
-      setOrbPosition(generateRandomPosition());
+    let isCancelled = false;
+
+    async function loadSound() {
+      try {
+        const { sound } = await Audio.Sound.createAsync(collectSound);
+        if (!isCancelled) {
+          setSoundObject(sound);
+        }
+      } catch (error) {
+        console.warn('Falha ao carregar o som de coleta', error);
+      }
+    }
+
+    loadSound();
+
+    return () => {
+      isCancelled = true;
+      if (soundObject) {
+        soundObject.unloadAsync();
+      }
+    };
+  }, []);
+
+  // 2. Função para tocar o som
+  const playCollectSound = async () => {
+    if (soundObject) {
+      try {
+        await soundObject.setPositionAsync(0);
+        await soundObject.playFromPositionAsync(0);
+      } catch (error) {
+        console.warn('Erro ao tocar o som', error);
+      }
+    }
+  };
+
+  // Resetar jogo quando resetTrigger mudar
+  useEffect(() => {
+    setPlayerPosition({ x: width / 2, y: height / 2 });
+    setOrbPosition(generateRandomPosition());
   }, [resetTrigger]);
 
-  // Efeito para mover o orbe a cada 3 segundos (Modo Difícil)
+  // Mover o orbe a cada 3s no modo difícil
   useEffect(() => {
-    // SÓ ATIVA o movimento se o jogo estiver ativo E for o MODO DIFÍCIL
     if (!gameActive || !isHardMode) return;
 
     const intervalId = setInterval(() => {
       setOrbPosition(generateRandomPosition());
-    }, 2000); // 3000ms = 3 segundos
+    }, 2000);
 
     return () => clearInterval(intervalId);
   }, [gameActive, isHardMode]);
 
   // Listener do acelerômetro
   useEffect(() => {
-    // Pausa ou desativa o listener se o jogo não estiver ativo
     if (!gameActive) {
-        Accelerometer.setUpdateInterval(0);
-        return;
+      Accelerometer.setUpdateInterval(0);
+      return;
     }
 
     Accelerometer.setUpdateInterval(16);
@@ -62,23 +106,19 @@ export default function OrbFlutuanteGame({ gameActive, onCollect, resetTrigger, 
     });
 
     return () => {
-        subscription.remove();
-        Accelerometer.setUpdateInterval(0); // Limpa o listener ao desmontar ou pausar
+      subscription.remove();
+      Accelerometer.setUpdateInterval(0);
     };
   }, [gameActive]);
 
   // Movimento do jogador
   useEffect(() => {
-    if (!gameActive) return; // Pausa o movimento se o jogo não estiver ativo
+    if (!gameActive) return;
 
-    // Horizontal: Ajustado para 15 para melhor controle lateral.
-    let newX = playerPosition.x + data.x * -15; 
-    
-    // Compensação de Gravidade: Multiplicador maior (35) para 'subida' (data.y negativo) e menor (15) para 'descida' (data.y positivo).
-    const sensitivityY = data.y < 0 ? 35 : 15; 
-    let newY = playerPosition.y + data.y * sensitivityY;  // inclinação frente/trás
+    let newX = playerPosition.x + data.x * -15;
+    const sensitivityY = data.y < 0 ? 35 : 15;
+    let newY = playerPosition.y + data.y * sensitivityY;
 
-    // Limites da tela
     if (newX < 0) newX = 0;
     if (newX > width - PLAYER_SIZE) newX = width - PLAYER_SIZE;
     if (newY < 0) newY = 0;
@@ -89,7 +129,7 @@ export default function OrbFlutuanteGame({ gameActive, onCollect, resetTrigger, 
 
   // Colisão com o orbe
   useEffect(() => {
-    if (!gameActive) return; // Pausa a colisão se o jogo não estiver ativo
+    if (!gameActive) return;
 
     const playerCenterX = playerPosition.x + PLAYER_SIZE / 2;
     const playerCenterY = playerPosition.y + PLAYER_SIZE / 2;
@@ -100,33 +140,25 @@ export default function OrbFlutuanteGame({ gameActive, onCollect, resetTrigger, 
     const dy = playerCenterY - orbCenterY;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Colisão por cobertura total
     if (distance < PLAYER_SIZE  - ORB_SIZE ) {
       setOrbPosition(generateRandomPosition());
-      onCollect(); // Chama a função do pai para atualizar o placar
+      onCollect();
+      playCollectSound();
     }
   }, [playerPosition, gameActive]);
 
   return (
     <View style={styles.container}>
-      {/* Apenas elementos do jogo. O UI (placar/instruções) é gerenciado pelo pai. */}
       <View
         style={[
           styles.orb,
-          {
-            left: orbPosition.x,
-            top: orbPosition.y,
-          },
+          { left: orbPosition.x, top: orbPosition.y },
         ]}
       />
-
       <View
         style={[
           styles.player,
-          {
-            left: playerPosition.x,
-            top: playerPosition.y,
-          },
+          { left: playerPosition.x, top: playerPosition.y },
         ]}
       />
     </View>
@@ -136,26 +168,25 @@ export default function OrbFlutuanteGame({ gameActive, onCollect, resetTrigger, 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // Cor de fundo será definida no Index.tsx
   },
   player: {
     position: 'absolute',
     width: PLAYER_SIZE,
     height: PLAYER_SIZE,
     borderRadius: PLAYER_SIZE / 2,
-    backgroundColor: '#FFD700', // Pac-Man Amarelo (Player)
+    backgroundColor: '#FFD700',
     borderWidth: 2,
     borderColor: '#fff',
   },
   orb: {
     position: 'absolute',
     width: ORB_SIZE,
-    height: ORB_SIZE + 5, // Levemente mais alto para a forma de fantasma
+    height: ORB_SIZE + 5,
     borderTopLeftRadius: ORB_SIZE / 2,
     borderTopRightRadius: ORB_SIZE / 2,
-    borderBottomLeftRadius: 5, 
+    borderBottomLeftRadius: 5,
     borderBottomRightRadius: 5,
-    backgroundColor: '#FFB852', // Fantasma Laranja (Target)
+    backgroundColor: '#FFB852',
     borderWidth: 2,
     borderColor: '#fff',
   },
