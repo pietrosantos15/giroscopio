@@ -42,7 +42,7 @@ export default function OrbFlutuanteGame({ gameActive, onCollect, resetTrigger, 
 
     const intervalId = setInterval(() => {
       setOrbPosition(generateRandomPosition());
-    }, 3000); // 3000ms = 3 segundos
+    }, 2000); // 3000ms = 3 segundos
 
     return () => clearInterval(intervalId);
   }, [gameActive, isHardMode]);
@@ -101,7 +101,7 @@ export default function OrbFlutuanteGame({ gameActive, onCollect, resetTrigger, 
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     // Colisão por cobertura total
-    if (distance < PLAYER_SIZE / 2 - ORB_SIZE / 2) {
+    if (distance < PLAYER_SIZE  - ORB_SIZE ) {
       setOrbPosition(generateRandomPosition());
       onCollect(); // Chama a função do pai para atualizar o placar
     }
